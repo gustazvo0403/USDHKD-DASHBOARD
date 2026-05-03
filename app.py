@@ -27,20 +27,17 @@ if 'initialized' not in st.session_state:
 
 # --- 一鍵重置 / 徹底清空邏輯 ---
 def reset_all():
-    # 將所有輸入框設為 None (即畫面顯示完全空白)
     st.session_state.issuer_input = None
     st.session_state.term_input = None
     st.session_state.strike_input = None
     st.session_state.amt_input = None
     st.session_state.curr_input = None
-    st.session_state.fixing_input = 7.7500 # Slider 必須有數值，因此回到起點
+    st.session_state.fixing_input = 7.7500 
     
-    # 清空所有動態生成的 Version
     keys_to_del = [k for k in st.session_state.keys() if k.startswith("name_") or k.startswith("pr_") or k.startswith("base_")]
     for k in keys_to_del:
         del st.session_state[k]
     
-    # 只留一個完全空白的 Version 框架
     st.session_state.versions = [1]
     st.session_state.name_1 = None
     st.session_state.pr_1 = None
@@ -55,7 +52,8 @@ st.sidebar.header("📝 基本信息設置")
 st.sidebar.text_input("發行機構", key="issuer_input", placeholder="例如: 華泰國際")
 st.sidebar.number_input("產品期限 (個月)", step=1, key="term_input", placeholder="例如: 12")
 st.sidebar.number_input("行使價 (Strike)", format="%.4f", step=0.01, key="strike_input", placeholder="例如: 7.7500")
-st.sidebar.slider("模擬期末匯率 (Fixing)", min_value=7.7000, max_value=7.8600, step=0.0010, format="%.4f", key="fixing_input")
+# 更新滑桿下限與圖表保持一致
+st.sidebar.slider("模擬期末匯率 (Fixing)", min_value=7.7400, max_value=7.8600, step=0.0010, format="%.4f", key="fixing_input")
 
 st.sidebar.markdown("---")
 st.sidebar.header("💰 投資入門門檻設置")
@@ -117,8 +115,8 @@ def calc_return(fixing, base, pr, strike):
     effective_fixing = min(fixing, 7.8500)
     return 1 + base + pr * max(1 - strike/effective_fixing, 0)
 
-# --- 主畫面：標題與即時看板 ---
-st.title("📈 USDHKD 結構性產品：收益互動分析模擬器")
+# --- 主畫面：標題與即時看板 (標題已更新) ---
+st.title("📈 USD/HKD聯匯結構性產品投資收益模擬器")
 st.markdown(f"**發行機構**：{issuer} &nbsp;|&nbsp; **產品期限**：{term_months} 個月")
 
 st.caption("*(註：以下預期年化回報區間基於香港聯繫匯率制在 7.7500 至 7.8500 之間不被打破之假設進行計算)*")
@@ -153,7 +151,6 @@ for i, tab in enumerate(tabs):
     with tab:
         col_red, col_yellow, col_green = st.columns(3)
         
-        # 紅色
         bot_ret = calc_return(7.7500, v['base'], v['pr'], strike)
         bot_ann = (bot_ret - 1) * (12 / term_months)
         bot_amt = threshold_amount * bot_ret
@@ -170,7 +167,6 @@ for i, tab in enumerate(tabs):
             </div>
             """, unsafe_allow_html=True)
             
-        # 黃色
         top_ret = calc_return(7.8500, v['base'], v['pr'], strike)
         top_ann = (top_ret - 1) * (12 / term_months)
         
@@ -185,7 +181,6 @@ for i, tab in enumerate(tabs):
             </div>
             """, unsafe_allow_html=True)
 
-        # 綠色
         top_amt = threshold_amount * top_ret
         top_profit = threshold_amount * (top_ret - 1)
         
@@ -203,7 +198,8 @@ for i, tab in enumerate(tabs):
 st.markdown("---")
 
 # --- Plotly 互動圖表 ---
-rates = np.linspace(7.7000, 7.8600, 160)
+# 限制渲染與顯示的 X 軸範圍為 7.7400 到 7.8600
+rates = np.linspace(7.7400, 7.8600, 160)
 fig = go.Figure()
 colors = ['#0070C0', '#E26B0A', '#2CA02C', '#D62728', '#9467BD']
 
@@ -217,7 +213,8 @@ for i, v in enumerate(active_versions):
     ))
     
     floor_val = 1 + v['base']
-    fig.add_annotation(x=7.7200, y=floor_val, text=f"底部保護 ({v['name']})", showarrow=False, font=dict(color=color, size=11), yshift=10)
+    # 底部保護的文字標註位置稍作調整，適應新的 X 軸起點
+    fig.add_annotation(x=7.7450, y=floor_val, text=f"底部保護 ({v['name']})", showarrow=False, font=dict(color=color, size=11), yshift=10)
 
 fig.add_vline(x=7.8500, line_dash="dash", line_color="red")
 fig.add_annotation(x=7.8500, y=1.08, text="弱方兌換保證 (7.8500上限)", textangle=-90, font=dict(color="red"))
@@ -228,6 +225,7 @@ fig.update_layout(
     title='收益結構動態對比圖',
     xaxis_title='期末匯率 (Fixing Rate)', yaxis_title='到期總回報',
     xaxis_tickformat='.4f', yaxis_tickformat='.1%', 
+    xaxis_range=[7.7400, 7.8600], # 強制鎖定 X 軸可視範圍
     hovermode="x unified", template="plotly_white", height=450
 )
 st.plotly_chart(fig, use_container_width=True)
