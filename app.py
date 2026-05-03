@@ -105,7 +105,7 @@ for i, tab in enumerate(tabs):
         with col_red:
             st.markdown(f"""
             <div style="background-color: #fce8e6; border-left: 5px solid #d93025; padding: 15px; border-radius: 5px; height: 100%;">
-                <h4 style="color: #d93025; margin-top: 0;">🟥 觸底收益 (匯率不漲)</h4>
+                <h4 style="color: #d93025; margin-top: 0;">🟥 觸底收益</h4>
                 <p style="margin: 5px 0; font-size: 14px;">期末匯率 ≤ {strike:.4f}</p>
                 <h3 style="margin: 15px 0;">{currency} {bot_amt:,.0f}</h3>
                 <p style="margin: 5px 0; color: #555;">淨利潤: <strong>{currency} {bot_profit:,.0f}</strong></p>
@@ -119,7 +119,7 @@ for i, tab in enumerate(tabs):
         with col_yellow:
             st.markdown(f"""
             <div style="background-color: #fef7e0; border-left: 5px solid #f9ab00; padding: 15px; border-radius: 5px; height: 100%;">
-                <h4 style="color: #ea8600; margin-top: 0;">🟨 浮動增長區間</h4>
+                <h4 style="color: #ea8600; margin-top: 0;">🟨 浮動收益</h4>
                 <p style="margin: 5px 0; font-size: 14px;">{strike:.4f} < 匯率 < 7.8500</p>
                 <h3 style="margin: 15px 0;">掛鉤匯率浮動</h3>
                 <p style="margin: 5px 0; color: #555;">參與率放大: <strong>{v['pr']*100:.0f}%</strong></p>
@@ -133,7 +133,7 @@ for i, tab in enumerate(tabs):
         with col_green:
             st.markdown(f"""
             <div style="background-color: #e6f4ea; border-left: 5px solid #1e8e3e; padding: 15px; border-radius: 5px; height: 100%;">
-                <h4 style="color: #1e8e3e; margin-top: 0;">🟩 觸頂封頂收益</h4>
+                <h4 style="color: #1e8e3e; margin-top: 0;">🟩 封頂收益</h4>
                 <p style="margin: 5px 0; font-size: 14px;">期末匯率 ≥ 7.8500</p>
                 <h3 style="margin: 15px 0;">{currency} {top_amt:,.0f}</h3>
                 <p style="margin: 5px 0; color: #555;">淨利潤: <strong>{currency} {top_profit:,.0f}</strong></p>
