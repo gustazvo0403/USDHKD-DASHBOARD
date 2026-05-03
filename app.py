@@ -199,7 +199,7 @@ st.markdown("---")
 
 # --- Plotly 互動圖表 ---
 # 限制渲染與顯示的 X 軸範圍為 7.7400 到 7.8600
-rates = np.linspace(7.7400, 7.8600, 160)
+rates = np.linspace(7.7300, 7.8700, 160)
 fig = go.Figure()
 colors = ['#0070C0', '#E26B0A', '#2CA02C', '#D62728', '#9467BD']
 
