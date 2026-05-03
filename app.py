@@ -118,7 +118,7 @@ def calc_return(fixing, base, pr, strike):
     return 1 + base + pr * max(1 - strike/effective_fixing, 0)
 
 # --- 主畫面：標題與即時看板 ---
-st.title("📈 USDHKD 結構性產品：收益互動分析儀表板")
+st.title("📈 USDHKD 結構性產品：收益互動分析模擬器")
 st.markdown(f"**發行機構**：{issuer} &nbsp;|&nbsp; **產品期限**：{term_months} 個月")
 
 st.caption("*(註：以下預期年化回報區間基於香港聯繫匯率制在 7.7500 至 7.8500 之間不被打破之假設進行計算)*")
