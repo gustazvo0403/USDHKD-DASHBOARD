@@ -32,7 +32,7 @@ def reset_all():
     st.session_state.strike_input = None
     st.session_state.amt_input = None
     st.session_state.curr_input = None
-    st.session_state.fixing_input = 7.8370 # 恢復為初始滑桿位置
+    st.session_state.fixing_input = 7.8370 
     
     keys_to_del = [k for k in st.session_state.keys() if k.startswith("name_") or k.startswith("pr_") or k.startswith("base_")]
     for k in keys_to_del:
@@ -73,7 +73,7 @@ for vid in st.session_state.versions:
     with st.sidebar.expander(expander_title, expanded=True):
         st.text_input("版本名稱", key=name_key, placeholder="例如: Version 1")
         st.number_input("參與率 (PR) %", step=10.0, key=pr_key, placeholder="例如: 700.0")
-        st.number_input("保底息 %", step=1.0, key=base_key, placeholder="例如: 2.0")
+        st.number_input("保底息 % (年化)", step=1.0, key=base_key, placeholder="例如: 2.0")
 
 col1, col2 = st.sidebar.columns(2)
 with col1:
@@ -110,9 +110,12 @@ for vid in st.session_state.versions:
         "base": (b / 100.0) if b is not None else 0.0
     })
 
-def calc_return(fixing, base, pr, strike):
+# --- 核心運算邏輯 (修正：引入產品期限將保底息年化轉為期間絕對息) ---
+def calc_return(fixing, base_annual, pr, strike, t_months):
     effective_fixing = min(fixing, 7.8500)
-    return 1 + base + pr * max(1 - strike/effective_fixing, 0)
+    # 期間保底息 = 年化保底息 * (期限/12)
+    period_base = base_annual * (t_months / 12.0)
+    return 1 + period_base + pr * max(1 - strike/effective_fixing, 0)
 
 # --- 主畫面：標題與即時看板 ---
 st.title("📈 USD/HKD聯匯結構性產品投資收益模擬器")
@@ -121,8 +124,8 @@ st.markdown(f"**發行機構**：{issuer} &nbsp;|&nbsp; **產品期限**：{term
 st.caption("*(註：以下預期年化回報區間基於香港聯繫匯率制在 7.7500 至 7.8500 之間不被打破之假設進行計算)*")
 cols = st.columns(len(active_versions))
 for col, v in zip(cols, active_versions):
-    min_ret = calc_return(7.7500, v['base'], v['pr'], strike)
-    max_ret = calc_return(7.8500, v['base'], v['pr'], strike)
+    min_ret = calc_return(7.7500, v['base'], v['pr'], strike, term_months)
+    max_ret = calc_return(7.8500, v['base'], v['pr'], strike, term_months)
     min_ann = (min_ret - 1) * (12 / term_months)
     max_ann = (max_ret - 1) * (12 / term_months)
     
@@ -150,8 +153,7 @@ for i, tab in enumerate(tabs):
     with tab:
         col_red, col_yellow, col_green = st.columns(3)
         
-        # 1. 紅色：觸底收益
-        bot_ret = calc_return(7.7500, v['base'], v['pr'], strike)
+        bot_ret = calc_return(7.7500, v['base'], v['pr'], strike, term_months)
         bot_ann = (bot_ret - 1) * (12 / term_months)
         bot_amt = threshold_amount * bot_ret
         bot_profit = threshold_amount * (bot_ret - 1)
@@ -167,8 +169,7 @@ for i, tab in enumerate(tabs):
             </div>
             """, unsafe_allow_html=True)
             
-        # 2. 黃色：浮動收益 (綁定左側模擬匯率即時核算)
-        sim_ret = calc_return(spot_fixing, v['base'], v['pr'], strike)
+        sim_ret = calc_return(spot_fixing, v['base'], v['pr'], strike, term_months)
         sim_ann = (sim_ret - 1) * (12 / term_months)
         sim_amt = threshold_amount * sim_ret
         sim_profit = threshold_amount * (sim_ret - 1)
@@ -184,8 +185,7 @@ for i, tab in enumerate(tabs):
             </div>
             """, unsafe_allow_html=True)
 
-        # 3. 綠色：封頂收益
-        top_ret = calc_return(7.8500, v['base'], v['pr'], strike)
+        top_ret = calc_return(7.8500, v['base'], v['pr'], strike, term_months)
         top_ann = (top_ret - 1) * (12 / term_months)
         top_amt = threshold_amount * top_ret
         top_profit = threshold_amount * (top_ret - 1)
@@ -201,7 +201,16 @@ for i, tab in enumerate(tabs):
             </div>
             """, unsafe_allow_html=True)
 
-st.markdown("---")
+# --- 新增：底層計算公式區塊 ---
+st.markdown("""
+<div style="background-color: #f8f9fa; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #1f4e78; margin-top: 20px; margin-bottom: 20px;">
+    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #1f4e78;">📐 產品到期贖回公式 (Redemption at Maturity)：</p>
+    <p style="margin: 0; font-family: monospace; font-size: 14px; color: #333;">
+        <b>到期總回報</b> = 100% (本金) + (年化保底息 × 產品期限/12) + 參與率(PR) × Max( 1 - 行使價 / USDHKD期末匯率 , 0 )
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
 
 # --- Plotly 互動圖表 ---
 rates = np.linspace(7.7400, 7.8600, 160)
@@ -209,7 +218,7 @@ fig = go.Figure()
 colors = ['#0070C0', '#E26B0A', '#2CA02C', '#D62728', '#9467BD']
 
 for i, v in enumerate(active_versions):
-    curve = [calc_return(r, v['base'], v['pr'], strike) for r in rates]
+    curve = [calc_return(r, v['base'], v['pr'], strike, term_months) for r in rates]
     color = colors[i % len(colors)]
     fig.add_trace(go.Scatter(
         x=rates, y=curve, mode='lines', name=v['name'], 
@@ -217,7 +226,8 @@ for i, v in enumerate(active_versions):
         hovertemplate="期末匯率: %{x:.4f}<br>總回報: %{y:.2%}<extra></extra>"
     ))
     
-    floor_val = 1 + v['base']
+    # 底部保護線現在也將時間權重納入計算
+    floor_val = 1 + v['base'] * (term_months / 12.0)
     fig.add_annotation(x=7.7450, y=floor_val, text=f"底部保護 ({v['name']})", showarrow=False, font=dict(color=color, size=11), yshift=10)
 
 fig.add_vline(x=7.8500, line_dash="dash", line_color="red")
@@ -242,7 +252,7 @@ table_data = {"預期期末匯率 (Fixing)": [f"{r:.4f}" for r in key_rates]}
 for v in active_versions:
     ann_rets = []
     for r in key_rates:
-        tr = calc_return(r, v['base'], v['pr'], strike)
+        tr = calc_return(r, v['base'], v['pr'], strike, term_months)
         ar = (tr - 1) * (12 / term_months)
         ann_rets.append(f"{ar:.2%}")
     table_data[f"{v['name']} (預期年化回報)"] = ann_rets
