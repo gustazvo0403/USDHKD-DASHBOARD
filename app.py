@@ -177,7 +177,7 @@ for i, tab in enumerate(tabs):
         with col_yellow:
             st.markdown(f"""
             <div style="background-color: #fef7e0; border-left: 5px solid #f9ab00; padding: 15px; border-radius: 5px; height: 100%;">
-                <h4 style="color: #ea8600; margin-top: 0;">🟨 浮動收益 (當前模擬)</h4>
+                <h4 style="color: #ea8600; margin-top: 0;">🟨 浮動收益</h4>
                 <p style="margin: 5px 0; font-size: 14px;">模擬匯率 = {spot_fixing:.4f}</p>
                 <h3 style="margin: 15px 0;">{currency} {sim_amt:,.0f}</h3>
                 <p style="margin: 5px 0; color: #555;">淨利潤: <strong>{currency} {sim_profit:,.0f}</strong></p>
