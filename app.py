@@ -245,7 +245,7 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # --- 底部數據表格 ---
-st.subheader("📊 主要匯率點收益試算表")
+st.subheader("📊 參考情景測算")
 key_rates = np.linspace(7.7500, 7.8500, 11) 
 table_data = {"預期期末匯率 (Fixing)": [f"{r:.4f}" for r in key_rates]}
 
