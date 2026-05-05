@@ -143,7 +143,7 @@ for col, v in zip(cols, active_versions):
 st.write("") 
 
 # --- 三色情境收益試算卡片 ---
-st.markdown("### 💼 投資情境與絕對收益試算")
+st.markdown("### 💼 損益試算（聯繫匯率不被打破）")
 st.info(f"💡 以下絕對收益預估基於投資本金 **{currency} {threshold_amount:,.0f}** 進行計算：")
 
 tabs = st.tabs([v['name'] for v in active_versions])
